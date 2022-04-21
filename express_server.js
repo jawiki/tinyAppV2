@@ -13,6 +13,20 @@ app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieSession({ name:"session", keys:["hello", "world"]}));
 
+const urlsForUser = function (id) {
+  console.log("id", id)
+  console.log("urldatabase", urlDatabase)
+  const results = {};
+  const keys = Object.keys(urlDatabase);
+
+  for (const shortUrl of keys) {
+    const url = urlDatabase[shortUrl];
+    if (url.userId === id) {
+      results[shortUrl] = url;
+   }
+  }
+  return results;
+};
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
@@ -48,9 +62,11 @@ app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 
-app.get("/hello", (req, res) => {
-  res.send("<html><body>Hello <b>World</b></body></html>\n");
+app.get("/login", (req, res) => {
+  const templateVars = { user: users[req.session.user_id] };
+  res.render("login", templateVars);
 });
+
 
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase };
@@ -71,8 +87,13 @@ app.get("/urls/:shortURL", (req, res) => {
 });
 
 app.post("/urls", (req, res) => {
-  console.log(req.body);  // Log the POST request body to the console
-  res.send("Ok");         // Respond with 'Ok' (we will replace this)
+  console.log(req.body);
+  const shortUrl = generateRandomString(6);
+  urlDatabase[shortUrl] = {
+    longUrl: req.body.longURL,
+    userId: req.session.userId,
+  };
+  res.redirect(`/urls/${shortUrl}`);
 });
 
 app.post("/urls/:shortURL/delete", (req, res) =>  {
