@@ -64,3 +64,50 @@ app.post("/urls/:id", (req, res) => {
   urlDatabase[shortUrl].longUrl = longURL ///
   res.redirect("/urls")
 });
+
+app.post("/register", (req, res) => {
+  const email = req.body.email;
+  const password = req.body.password;
+
+  if (!email || !password) {
+    return res.status(400).send("feilds cannot be blank");
+  }
+  const existingUser = searchUserByEmail(users, email);
+  if (existingUser) {
+    return res.status(400).send("the email address is already taken");
+  }
+  const userId = generateRandomString(6);
+  const salt = bcrypt.genSaltSync(10); //syncronous 
+  const hash = bcrypt.hashSync(password, salt);
+  const user = {  id:userId,email, password:hash };
+  users[userId] = user;
+  req.session.userId= userId
+  console.log(userId)
+  res.redirect("/urls")
+});
+
+
+app.post("/login", (req, res) => {
+  const email = req.body.email;
+  const password = req.body.password;
+
+  if (!email || !password) {
+    return res.status(400).send("feilds cannot be blank");
+  }
+  const user = searchUserByEmail(users, email);
+  if (!user) {
+    return res.status(400).send("no user with that email found");
+  }
+  if (bcrypt.compareSync(password, user.password)) {
+    
+    req.session.userId = user.id;
+    res.redirect("/urls");
+  } else {
+    return res.status(400).send("password does not match");
+  }
+});
+
+app.post("/logout", (req, res) => {
+  req.session = null;
+  res.redirect("/login");
+});
