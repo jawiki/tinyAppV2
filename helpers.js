@@ -1,4 +1,3 @@
-
 // searches users by email
 const searchUserByEmail = (users, email) => {
   for (const userId in users) {
@@ -13,12 +12,12 @@ const searchUserByEmail = (users, email) => {
 // generates random string of upper and lowercase letters
 function generateRandomString() {
   const letters = "ABCDEFGHIJKLMNOPQRSTUVWXTZabcdefghiklmnopqrstuvwxyz";
-  let String = 5; 
+  let String = 5;
   let randomString = "";
   for (let i = 0; i < String; i++) {
     num = Math.floor(Math.random() * letters.length);
     randomString += letters.substring(num, num + 1);
   }
-  return randomString
+  return randomString;
 }
-module.exports = {generateRandomString, searchUserByEmail } ;
+module.exports = { generateRandomString, searchUserByEmail };
