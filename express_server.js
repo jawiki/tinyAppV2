@@ -53,7 +53,7 @@ const users = {
   },
 };
 
-// GET Routes
+// GET Routes 
 
 app.get("/", (req, res) => {
   res.redirect("/urls");
@@ -121,7 +121,7 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${shortUrl}`);
 });
 
-app.post("/register", (req, res) => { 
+app.post("/register", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
 
@@ -133,7 +133,7 @@ app.post("/register", (req, res) => {
     return res.status(400).send("the email address is already taken");
   }
   const userId = generateRandomString(6);
-  const salt = bcrypt.genSaltSync(10); 
+  const salt = bcrypt.genSaltSync(10); // encrypted password
   const hash = bcrypt.hashSync(password, salt);
   const user = { id: userId, email, password: hash };
   users[userId] = user;
