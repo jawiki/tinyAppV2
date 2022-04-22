@@ -1,3 +1,5 @@
+// Required DATA
+
 const express = require("express");
 const app = express();
 const PORT = 6060; // default port 8080
@@ -14,6 +16,7 @@ app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieSession({ name: "session", keys: ["hello", "world"] }));
 
+
 const urlsForUser = function (id) {
   const results = {};
   const keys = Object.keys(urlDatabase);
@@ -26,7 +29,7 @@ const urlsForUser = function (id) {
   return results;
 };
 
-const urlDatabase = { //Database object for storing short and long urls to userID
+const urlDatabase = { 
   b2xVn2: {
     longUrl: "http://www.lighthouselabs.ca",
     userId: "grrIQ",
@@ -37,7 +40,7 @@ const urlDatabase = { //Database object for storing short and long urls to userI
   },
 };
 
-const users = { // User object for storing user information to userID
+const users = { 
   userRandomID: {
     id: "userRandomID",
     email: "user@example.com",
@@ -50,11 +53,13 @@ const users = { // User object for storing user information to userID
   },
 };
 
+// GET Routes
+
 app.get("/", (req, res) => {
   res.redirect("/urls");
 });
 
-app.get("/urls", (req, res) => { // check if user has access to stored urls
+app.get("/urls", (req, res) => { 
   const userId = req.session.userId;
   if (!users[userId]) {
     res.status(400).send("please login first");
@@ -69,7 +74,7 @@ app.get("/urls", (req, res) => { // check if user has access to stored urls
   }
 });
 
-app.get("/urls/new", (req, res) => { // add a new url to database
+app.get("/urls/new", (req, res) => { 
   const templateVars = {
     urls: urlDatabase,
     user: users[req.session.user_id],
@@ -81,7 +86,7 @@ app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 
-app.get("/urls/:shortURL", (req, res) => { // Show new short url
+app.get("/urls/:shortURL", (req, res) => { 
   const templateVars = {
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL].longUrl,
@@ -89,7 +94,7 @@ app.get("/urls/:shortURL", (req, res) => { // Show new short url
   res.render("urls_show", templateVars);
 });
 
-app.get("/register", (req, res) => { // show register script
+app.get("/register", (req, res) => { 
   const templateVars = { user: users[req.session.user_id] };
   res.render("register", templateVars);
 });
@@ -99,7 +104,15 @@ app.get("/login", (req, res) => {
   res.render("login", templateVars);
 });
 
-app.post("/urls", (req, res) => { // Generate short url
+app.get("/u/:shortURL", (req, res) => {
+  const shortURL = req.params.shortURL;
+  const longURL = urlDatabase[shortURL].longUrl;
+  res.redirect(`http://${longURL}`);
+});
+
+// POST Routes
+
+app.post("/urls", (req, res) => { 
   const shortUrl = generateRandomString(6);
   urlDatabase[shortUrl] = {
     longUrl: req.body.longURL,
@@ -108,7 +121,7 @@ app.post("/urls", (req, res) => { // Generate short url
   res.redirect(`/urls/${shortUrl}`);
 });
 
-app.post("/register", (req, res) => { // register a new user with encrypted password
+app.post("/register", (req, res) => { 
   const email = req.body.email;
   const password = req.body.password;
 
@@ -128,7 +141,7 @@ app.post("/register", (req, res) => { // register a new user with encrypted pass
   res.redirect("/urls");
 });
 
-app.post("/login", (req, res) => { // make sure user exists the login
+app.post("/login", (req, res) => { 
   const email = req.body.email;
   const password = req.body.password;
 
@@ -147,23 +160,23 @@ app.post("/login", (req, res) => { // make sure user exists the login
   }
 });
 
-app.post("/urls/:shortURL/delete", (req, res) => { // allows user to delete previously saved short url
+app.post("/urls/:shortURL/delete", (req, res) => { 
   delete urlDatabase[req.params.shortURL];
   res.redirect("/urls");
 });
 
-app.post("/urls/:id", (req, res) => { // make sure user can access their urls
+app.post("/urls/:id", (req, res) => { 
   const longURL = req.body.longURL;
   const shortUrl = req.params.id;
   urlDatabase[shortUrl].longUrl = longURL; 
   res.redirect("/urls");
 });
 
-app.post("/logout", (req, res) => { // remove session cookie and logout user
+app.post("/logout", (req, res) => {
   req.session = null;
   res.redirect("/login");
 });
 
-app.listen(PORT, () => { // listening to server
+app.listen(PORT, () => { 
   console.log(`Example app listening on port ${PORT}!`);
 });
