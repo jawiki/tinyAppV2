@@ -2,7 +2,7 @@
 
 const express = require("express");
 const app = express();
-const PORT = 6060; // default port 8080
+const PORT = 8080; // default port 8080
 
 const cookieParser = require("cookie-parser");
 const bodyParser = require("body-parser");
@@ -29,7 +29,7 @@ const urlsForUser = function (id) {
   return results;
 };
 
-const urlDatabase = { 
+const urlDatabase = { // database object for storing information to shortUrl
   b2xVn2: {
     longUrl: "http://www.lighthouselabs.ca",
     userId: "grrIQ",
@@ -40,7 +40,7 @@ const urlDatabase = {
   },
 };
 
-const users = { 
+const users = { // user object
   userRandomID: {
     id: "userRandomID",
     email: "user@example.com",
@@ -59,7 +59,7 @@ app.get("/", (req, res) => {
   res.redirect("/urls");
 });
 
-app.get("/urls", (req, res) => { 
+app.get("/urls", (req, res) => { // check that user has cookie permissions to se urls
   const userId = req.session.userId;
   if (!users[userId]) {
     res.status(400).send("please login first");
@@ -74,7 +74,7 @@ app.get("/urls", (req, res) => {
   }
 });
 
-app.get("/urls/new", (req, res) => { 
+app.get("/urls/new", (req, res) => { // show url database for user
   const templateVars = {
     urls: urlDatabase,
     user: users[req.session.user_id],
@@ -86,7 +86,7 @@ app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 
-app.get("/urls/:shortURL", (req, res) => { 
+app.get("/urls/:shortURL", (req, res) => { // 
   const templateVars = {
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL].longUrl,
@@ -94,34 +94,34 @@ app.get("/urls/:shortURL", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
-app.get("/register", (req, res) => { 
+app.get("/register", (req, res) => { // show register script to user
   const templateVars = { user: users[req.session.user_id] };
   res.render("register", templateVars);
 });
 
-app.get("/login", (req, res) => {
+app.get("/login", (req, res) => { // Show login script to user
   const templateVars = { user: users[req.session.user_id] };
   res.render("login", templateVars);
 });
 
-app.get("/u/:shortURL", (req, res) => {
+app.get("/u/:shortURL", (req, res) => { // redirect user to longUrl
   const shortURL = req.params.shortURL;
   const longURL = urlDatabase[shortURL].longUrl;
-  res.redirect(`http://${longURL}`);
+  res.redirect(`${longURL}`);
 });
 
 // POST Routes
 
-app.post("/urls", (req, res) => { 
+app.post("/urls", (req, res) => { // generate new short url
   const shortUrl = generateRandomString(6);
   urlDatabase[shortUrl] = {
-    longUrl: req.body.longURL,
+    longUrl: `https://${req.body.longURL}`,
     userId: req.session.userId,
   };
   res.redirect(`/urls/${shortUrl}`);
 });
 
-app.post("/register", (req, res) => {
+app.post("/register", (req, res) => { // run process to register a new user and store encrypted password 
   const email = req.body.email;
   const password = req.body.password;
 
@@ -141,7 +141,7 @@ app.post("/register", (req, res) => {
   res.redirect("/urls");
 });
 
-app.post("/login", (req, res) => { 
+app.post("/login", (req, res) => { // check if user information already exists to login
   const email = req.body.email;
   const password = req.body.password;
 
@@ -160,23 +160,23 @@ app.post("/login", (req, res) => {
   }
 });
 
-app.post("/urls/:shortURL/delete", (req, res) => { 
+app.post("/urls/:shortURL/delete", (req, res) => { // delete shortUrl from urlDatabase
   delete urlDatabase[req.params.shortURL];
   res.redirect("/urls");
 });
 
-app.post("/urls/:id", (req, res) => { 
+app.post("/urls/:id", (req, res) => { // redirect to urls
   const longURL = req.body.longURL;
   const shortUrl = req.params.id;
   urlDatabase[shortUrl].longUrl = longURL; 
   res.redirect("/urls");
 });
 
-app.post("/logout", (req, res) => {
+app.post("/logout", (req, res) => { // logout user and remove session coookie
   req.session = null;
   res.redirect("/login");
 });
 
-app.listen(PORT, () => { 
+app.listen(PORT, () => { // listening
   console.log(`Example app listening on port ${PORT}!`);
 });
