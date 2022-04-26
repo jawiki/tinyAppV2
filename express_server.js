@@ -4,13 +4,12 @@ const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
 
-const cookieParser = require("cookie-parser");
 const bodyParser = require("body-parser");
 const bcrypt = require("bcrypt");
-const res = require("express/lib/response");
+// const res = require("express/lib/response");
 const cookieSession = require("cookie-session");
 const { generateRandomString, searchUserByEmail } = require("./helpers");
-const req = require("express/lib/request");
+// const req = require("express/lib/request");
 
 app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -56,30 +55,27 @@ const users = { // user object
 // GET Routes 
 
 app.get("/", (req, res) => {
-  res.redirect("/urls");
+  res.redirect("/login");
 });
 
-app.get("/urls", (req, res) => { // check that user has cookie permissions to se urls
+app.get("/urls", (req, res) => { // check that user has cookie permissions to see urls
   const userId = req.session.userId;
-  if (!users[userId]) {
-    res.status(400).send("please login first");
-    return;
-  } //error
-  for (let user in users) {
-    if (users[user].id === userId) {
-      const urls = urlsForUser(userId);
-      const templateVars = { urls, user: users[user] };
-      res.render("urls_index", templateVars);
-    }
-  }
+  const urls = urlsForUser(userId);
+  const templateVars = { urls, user: users[userId] };
+  res.render("urls_index", templateVars);
 });
 
 app.get("/urls/new", (req, res) => { // show url database for user
   const templateVars = {
     urls: urlDatabase,
-    user: users[req.session.user_id],
+    user: users[req.session.userId],
   };
-  res.render("urls_new", templateVars);
+  const user = users[req.session.userId];
+  if (user) {
+    res.render("urls_new", templateVars);
+  } else {
+    res.redirect("/login")
+  }
 });
 
 app.get("/urls.json", (req, res) => {
@@ -90,23 +86,37 @@ app.get("/urls/:shortURL", (req, res) => { //
   const templateVars = {
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL].longUrl,
+    user: users[req.session.userId]
   };
-  res.render("urls_show", templateVars);
+  const user = users[req.session.userId]
+  const shortUrl = req.params.shortURL
+  console.log(urlDatabase[shortUrl].userId, user);
+  if (user && urlDatabase[shortUrl].userId === user.id) {
+    res.render("urls_show", templateVars);
+  } else {
+    res.status(401).send("you do not have access to this page")
+  }
 });
 
 app.get("/register", (req, res) => { // show register script to user
-  const templateVars = { user: users[req.session.user_id] };
+  const templateVars = { user: users[req.session.userId] };
   res.render("register", templateVars);
+  res.redirect("/urls");
 });
 
 app.get("/login", (req, res) => { // Show login script to user
-  const templateVars = { user: users[req.session.user_id] };
+  const templateVars = { user: users[req.session.userId] };
   res.render("login", templateVars);
+  res.redirect("/urls");
 });
 
 app.get("/u/:shortURL", (req, res) => { // redirect user to longUrl
   const shortURL = req.params.shortURL;
   const longURL = urlDatabase[shortURL].longUrl;
+  if (!longURL) {
+    res.status(404).send("this url does not exist")
+    return;
+  } 
   res.redirect(`${longURL}`);
 });
 
@@ -124,7 +134,7 @@ app.post("/urls", (req, res) => { // generate new short url
 app.post("/register", (req, res) => { // run process to register a new user and store encrypted password 
   const email = req.body.email;
   const password = req.body.password;
-
+  
   if (!email || !password) {
     return res.status(400).send("fields cannot be blank");
   }
@@ -169,12 +179,16 @@ app.post("/urls/:id", (req, res) => { // redirect to urls
   const longURL = req.body.longURL;
   const shortUrl = req.params.id;
   urlDatabase[shortUrl].longUrl = longURL; 
-  res.redirect("/urls");
+  // if (urlDatabase[shortUrl].userId === req.session.userId ) {
+   res.redirect("/urls");
+  // } else {
+  //  res.status(401).send("you do not have access to this url")
+  // }
 });
 
 app.post("/logout", (req, res) => { // logout user and remove session coookie
   req.session = null;
-  res.redirect("/login");
+  res.redirect("/urls");
 });
 
 app.listen(PORT, () => { // listening

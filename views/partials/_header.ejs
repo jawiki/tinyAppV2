@@ -18,15 +18,19 @@
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
       </div>
     </div>
-      <a href="/login">
-        <button>Login</button>
-      </a>
-     </form>
-    <a href="/register">
-      <button>Register</button>
-    </a>
-    <form method="POST" action="/logout">
-      <input type="submit" value="logout" />
-    </form>
+    <% if (user) { %>
+     <%= user.email %>
+      <form method="POST" action="/logout">
+        <input type="submit" value="logout" />
+      </form>
+    <%} else { %>
+      <form method="POST" action="/login">
+      <a href="/login"> login </a>
+      </form>
+       
+      <form method="POST" action="/register">
+      <a href="/register"> Register </a>
+      </form>
+    <%}%>
   </nav>
 </header>
