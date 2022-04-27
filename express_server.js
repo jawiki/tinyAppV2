@@ -90,7 +90,6 @@ app.get("/urls/:shortURL", (req, res) => { //
   };
   const user = users[req.session.userId]
   const shortUrl = req.params.shortURL
-  console.log(urlDatabase[shortUrl].userId, user);
   if (user && urlDatabase[shortUrl].userId === user.id) {
     res.render("urls_show", templateVars);
   } else {
